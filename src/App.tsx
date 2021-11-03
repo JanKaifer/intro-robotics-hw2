@@ -34,50 +34,60 @@ const Canvas = ({
   };
 
   const draw = (p5: p5Types) => {
-    const unit = 100;
-    const l0 = 0.2 * unit;
-    const q1 = 0.5 * t;
-    const q2 = 0.5 + 0.3 * t * unit;
-    const q3 = 2 - 0.25 * t * unit;
-
     const localChanges = (callback: () => void) => {
       p5.push();
       callback();
       p5.pop();
     };
 
-    const drawPoint = () => {
-      p5.sphere(2);
-    };
+    const drawForT = (t: number, draw: boolean) => {
+      const unit = 100;
+      const l0 = 0.2 * unit;
+      const q1 = 0.5 * t;
+      const q2 = 0.5 + 0.3 * t * unit;
+      const q3 = 2 - 0.25 * t * unit;
 
-    const drawLine = (target: Point) => {
-      p5.line(0, 0, 0, ...target);
-    };
+      const drawPoint = () => {
+        if (!draw) return;
+        p5.sphere(2);
+      };
 
-    const doStep = (
-      angleZ: number,
-      moveZ: number,
-      moveX: number,
-      angleX: number
-    ) => {
-      p5.rotateZ(angleZ);
-      drawLine([0, 0, moveZ]);
-      p5.translate(0, 0, moveZ);
+      const drawLine = (target: Point) => {
+        if (!draw) return;
+        p5.line(0, 0, 0, ...target);
+      };
+
+      const doStep = (
+        angleZ: number,
+        moveZ: number,
+        moveX: number,
+        angleX: number
+      ) => {
+        p5.rotateZ(angleZ);
+        drawLine([0, 0, moveZ]);
+        p5.translate(0, 0, moveZ);
+        drawPoint();
+        p5.translate(moveX, 0, 0);
+        p5.rotateX(angleX);
+      };
+
+      const drawArrow = (p: Point) => {
+        drawLine(p);
+      };
+
+      const drawAxis = () => {
+        drawArrow([0, 0, 100]);
+        localChanges(() => {
+          p5.stroke(255, 0, 0);
+          drawArrow([100, 0, 0]);
+        });
+      };
+
       drawPoint();
-      p5.translate(moveX, 0, 0);
-      p5.rotateX(angleX);
-    };
-
-    const drawArrow = (p: Point) => {
-      drawLine(p);
-    };
-
-    const drawAxis = () => {
-      drawArrow([0, 0, 100]);
-      localChanges(() => {
-        p5.stroke(255, 0, 0);
-        drawArrow([100, 0, 0]);
-      });
+      doStep(0, l0, 0, 0);
+      doStep(q1, 1, 0, 0);
+      doStep(p5.PI, q2, 0, p5.HALF_PI * 3);
+      doStep(0, q3, 0, 0);
     };
 
     p5.background(255);
@@ -86,11 +96,16 @@ const Canvas = ({
     p5.rotateY(p5.TWO_PI * y);
     p5.plane(200);
 
-    drawPoint();
-    doStep(0, l0, 0, 0);
-    doStep(q1, 1, 0, 0);
-    doStep(p5.PI, q2, 0, p5.HALF_PI * 3);
-    doStep(0, q3, 0, 0);
+    localChanges(() => {
+      drawForT(t, true);
+    });
+
+    for (let currT = 0; currT < 3; currT += 0.01) {
+      localChanges(() => {
+        drawForT(currT, false);
+        p5.sphere(0.5);
+      });
+    }
   };
 
   return <Sketch setup={setup} draw={draw} />;
